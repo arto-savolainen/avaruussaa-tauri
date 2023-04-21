@@ -1,3 +1,4 @@
+import { app } from '@tauri-apps/api'
 import { appWindow } from '@tauri-apps/api/window'
 
 const activityElement = document.getElementById('activity')
@@ -10,6 +11,8 @@ const trayInput = document.getElementById('tray-input')
 const stationElement = document.getElementById('station')
 const stationIcon = document.getElementById('station-icon')
 const stationsTable = document.getElementById('stations-table')
+const minimizeButton = document.getElementById('titlebar-minimize')
+const closeButton = document.getElementById('titlebar-close')
 
 const mainDiv = document.getElementById('main-page')
 const settingsDiv = document.getElementById('settings-page')
@@ -23,6 +26,7 @@ stationsDiv.style.display = 'none'
 const bodyStyle = getComputedStyle(document.getElementById('body'))
 const defaultFontColor = bodyStyle.color
 const defaultFontSize = bodyStyle.fontSize
+const defaultBackgroundColor = bodyStyle.backgroundColor
 
 let notificationInterval
 let notificationTreshold
@@ -120,7 +124,8 @@ const buildStationsTable = () => {
 
 
 // Receive UI configuration data from main process and initialize values
-appWindow.listen('ui-set-config', (config) => { // CHANGE TO EVENT // CHANGE TO EVENT // CHANGE TO EVENT // CHANGE TO EVENT // CHANGE TO EVENT 
+appWindow.listen('ui-set-config', (event) => {
+  const config = event.payload
   notificationInterval = config.notificationInterval
   notificationTreshold = config.notificationTreshold
   stations = config.STATIONS
@@ -135,28 +140,29 @@ appWindow.listen('ui-set-config', (config) => { // CHANGE TO EVENT // CHANGE TO 
   buildStationsTable()
 })
 
-// Display error if the data fetching request in main process has failed
-appWindow.listen('ui-show-error', (error) => {
-  updateActivityElement(error)
+// Display error if the data fetching request in main script has failed
+appWindow.listen('ui-show-error', (event) => {
+  updateActivityElement(event.payload)
 })
 
-// Receive updated activity value from main process
-appWindow.listen('ui-update-activity', (newStationsData) => {
-  stations = newStationsData
+// Receive updated activity data for stations from main script
+appWindow.listen('ui-update-activity', (event) => {
+  stations = event.payload
   updateActivityElement()
 })
 
 
-// Receive time to next activity update from main process and run the timer updating UI
-appWindow.listen('ui-set-update-timer', (timeMs) => {
-  updateTime = Date.now() + timeMs
+// Receive time to the next activity update from main script and run the timer updating UI
+appWindow.listen('ui-set-update-timer', (event) => {
+  const timeUntilUpdateMs = event.payload
+  updateTime = Date.now() + timeUntilUpdateMs
 
   if (timer) {
     clearInterval(timer)
     timer = null
   }
 
-  updateTimerDisplay(timeMs)
+  updateTimerDisplay(timeUntilUpdateMs)
 
   timer = setInterval(() => {
     updateTimerDisplay(updateTime - Date.now())
@@ -313,11 +319,22 @@ stationsTable.addEventListener('click', (event) => {
 // ------------------ EVENT LISTENERS FOR titlebar-buttons -------------------
 
 
-document.getElementById('titlebar-minimize').addEventListener('click', () => {
+minimizeButton.addEventListener('click', () => {
   appWindow.emit('minimize')
+
+  minimizeButton.style.backgroundColor = defaultBackgroundColor // Workaround
 })
 
-document.getElementById('titlebar-close').addEventListener('click', () => {
+// background-color set with :hover doesn't properly reset when window is unminimized, so we implement our own :hover
+minimizeButton.addEventListener('mouseenter', () => {
+  minimizeButton.style.backgroundColor = '#343434'
+})
+
+minimizeButton.addEventListener('mouseleave', () => {
+  minimizeButton.style.backgroundColor = defaultBackgroundColor
+})
+
+closeButton.addEventListener('click', () => {
   appWindow.emit('close')
 })
 

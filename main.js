@@ -167,7 +167,7 @@ const updateData = async () => {
   }
 
   // Send updated data to renderer
-  appWindow.emit('update-activity', stationsCache)
+  appWindow.emit('ui-update-activity', stationsCache)
 }
 
 
@@ -230,7 +230,7 @@ window.addEventListener("DOMContentLoaded", () => {
   // The website we get data from updates every ten minutes past the hour. Se we need to set a timer that triggers a data
   // fetching operation just after that update. However, the site can take a bit of time to update (up to some tens of seconds).
   // Here we get how many minutes until update happens from the present moment.
-  time = new Date()
+  let time = new Date()
   // Calculate how many minutes to the next time minutes are divisible by 10 (ie. 00, 10, 20 etc.)
   let offsetMinutes = 10 - (time.getMinutes() % 10 === 0 ? 10 : time.getMinutes() % 10)
   // How many seconds to a full minute? By adding this to offsetMinutes we give the site a 1 minute buffer to update
@@ -284,11 +284,13 @@ appWindow.listen('close', () => {
 // })
 
 
-// ------------------ IPC RECEIVER FUNCTIONS FOR MAIN ------------------
+// ------------------ HANDLE EVENTS FROM UI SCRIPT ------------------
 
 
 // Triggers when the user sets a new value for the minimum delay between notifications
-ipcMain.on('set-interval', (event, newInterval) => {
+appWindow.listen('set-interval', (event) => {
+  const newInterval = event.payload
+
   if (intervalTimerStart) {
     // With this the notification suppression timer behaves as if the old timer was started with the new interval
     const timeLeft = (intervalTimerStart.getTime() + newInterval * HOURS_TO_MS) - Date.now()
@@ -310,23 +312,27 @@ ipcMain.on('set-interval', (event, newInterval) => {
 })
 
 // Triggers when user sets a new value for the notification treshold
-ipcMain.on('set-treshold', (event, newTreshold) => {
-  notificationTreshold = newTreshold
+// event.payload === newTreshold
+appWindow.listen('set-treshold', (event) => {
+  notificationTreshold = event.payload
 })
 
 // Triggers when user clicks the notifications on / off toggle
-ipcMain.on('set-toggle', (event, checked) => {
-  notificationToggleChecked = checked
+// event.payload === checked
+appWindow.listen('set-toggle', (event) => {
+  notificationToggleChecked = event.payload
 })
 
 // Triggers when user clicks the minimize to tray on / off toggle
-ipcMain.on('set-tray-toggle', (event, checked) => {
-  minimizeToTray = checked
+// event.payload === checked
+appWindow.listen('set-tray-toggle', (event) => {
+  minimizeToTray = event.payload
 })
 
 // Triggers when user clicks a cell in the stations list table
-ipcMain.on('set-station', (event, newStationCode) => {
-  currentStation = stationsCache.find(x => x.code === newStationCode)
+// event.payload === newStationCode
+appWindow.listen('set-station', (event) => {
+  currentStation = stationsCache.find(x => x.code === event.payload)
 })
 
 

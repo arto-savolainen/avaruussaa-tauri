@@ -28,9 +28,14 @@ body {
   height: 100%;
 }
 
-.titlebar-button:hover {
-  background-color: #343434;
+#titlebar-close:hover {
+  background-color: #e81123;
 }
+
+/* background-color set with :hover doesn't properly reset when window is unminimized, this is implemented with events */
+/*#titlebar-minimize:hover {
+  background-color: #343434;
+}*/
 
 #settings-icon {
   float: left;
