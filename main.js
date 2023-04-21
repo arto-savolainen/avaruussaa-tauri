@@ -1,6 +1,6 @@
-import { emit, listen } from '@tauri-apps/api/event'
 import { appWindow } from '@tauri-apps/api/window'
 import { sendNotification } from '@tauri-apps/api/notification'
+import { invoke } from '@tauri-apps/api/tauri'
 import axios from 'axios'
 
 const TEN_MINUTES_MS = 10 * 60 * 1000
@@ -46,7 +46,7 @@ const STATIONS = [
 let mainWindow
 let notificationTreshold = 0.4 // Default value, let user change this. In reality likelyhood depends on observatory location
 let notificationInterval = 1 // Minimum time between notifications in hours
-let minimizeToTray = false // DEV VALUE, VAIHDA TRUE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+let minimizeToTray = true
 let intervalTimer
 let intervalTimerStart
 let suppressNotification = false
@@ -184,39 +184,6 @@ const initializeUI = () => {
 }
 
 
-//  REMEMBER 
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-// SET ICON
-
-
-// const createTray = () => {
-//   let tray = new Tray(path.join(__dirname, "app-icon.png"))
-
-//   // Menu when right-clicking tray icon
-//   const contextMenu = Menu.buildFromTemplate([
-//     {
-//       label: 'Show', click: () => {
-//         mainWindow.show()
-//       }
-//     },
-//     {
-//       label: 'Quit', click: () => {
-//         app.quit()
-//       }
-//     }
-//   ])
-
-//   tray.on('double-click', (event) => {
-//     mainWindow.show()
-//   })
-
-//   tray.setToolTip('Avaruussää')
-//   tray.setContextMenu(contextMenu)
-
-//   return tray
-// }
-
-
 // ------------------ PROGRAM EXECUTION STARTS HERE ------------------
 
 
@@ -263,8 +230,7 @@ window.addEventListener("DOMContentLoaded", () => {
 // Tray stuff
 appWindow.listen('minimize', (event) => {
   if (minimizeToTray) {
-    event.preventDefault()
-    mainWindow.hide()
+    appWindow.hide()
     tray = 'createTray() placeholder'
   }
   else {
@@ -325,8 +291,10 @@ appWindow.listen('set-toggle', (event) => {
 
 // Triggers when user clicks the minimize to tray on / off toggle
 // event.payload === checked
-appWindow.listen('set-tray-toggle', (event) => {
+appWindow.listen('set-tray-toggle', async (event) => {
   minimizeToTray = event.payload
+  const response = await invoke('toggle_tray', { test: '420' })
+  console.log('RESPONSE:', response)
 })
 
 // Triggers when user clicks a cell in the stations list table

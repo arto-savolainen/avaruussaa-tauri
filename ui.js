@@ -1,4 +1,3 @@
-import { app } from '@tauri-apps/api'
 import { appWindow } from '@tauri-apps/api/window'
 
 const activityElement = document.getElementById('activity')
