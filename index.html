@@ -1,62 +1,78 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="stylesheet" href="style.css" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tauri App</title>
-    <style>
-      .logo.vanilla:hover {
-        filter: drop-shadow(0 0 2em #ffe21c);
-      }
-    </style>
-  </head>
+<html>
 
-  <body>
-    <div data-tauri-drag-region class="titlebar">
+<head>
+  <link href="style.css" rel="stylesheet">
+  <link href="toggle.css" rel="stylesheet">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+  <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'"> -->
+
+  <title>Avaruussää</title>
+</head>
+
+<body id="body">
+  <div data-tauri-drag-region id="titlebar">
+    <div><img id="settings-icon" src="bars.png"></div>
+    <div id="titlebar-buttons">
       <div class="titlebar-button" id="titlebar-minimize">
-        <img
-          src="https://api.iconify.design/mdi:window-minimize.svg"
-          alt="minimize"
-        />
+        <img src="./button-minimize.svg" alt="minimize" />
       </div>
       <div class="titlebar-button" id="titlebar-close">
-        <img src="https://api.iconify.design/mdi:close.svg" alt="close" />
+        <img src="./button-close.svg" alt="close" />
       </div>
     </div>
+  </div>
 
+  <div id="page-area">
 
-    <div class="container">
-      <h1>Welcome to Tauri!</h1>
+  <div id="main-page">
+    <h1 class="header">Aktiivisuus <span id="activity-unit">(nT/s)</span></h1>
+    <h2 id="activity">lataa...</h2>
+    <div id="timer">Seuraava päivitys: 00:00</div>
+    <div id="station"></div><span> <img id="station-icon" src="station-icon.png"> </span>
+  </div>
 
-      <div class="row">
-        <a href="https://tauri.app" target="_blank">
-          <img src="/assets/tauri.svg" class="logo tauri" alt="Tauri logo" />
-        </a>
-        <a
-          href="https://developer.mozilla.org/en-US/docs/Web/JavaScript"
-          target="_blank"
-        >
-          <img
-            src="/assets/javascript.svg"
-            class="logo vanilla"
-            alt="JavaScript logo"
-          />
-        </a>
+  <div id="settings-page">
+    <h1 class="header">Asetukset</h1>
+    <div id="options">
+      <div id="interval" class="option">
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Notifikaatioväli: <input id="interval-input" class="input-box" size="1"> tuntia
       </div>
-
-      <p>Click on the Tauri logo to learn more about the framework</p>
-
-      <div class="row">
-        <div>
-          <input id="greet-input" placeholder="Enter a name..." />
-          <button id="greet-button" type="button">Greet</button>
-        </div>
+      <div id="treshold" class="option">
+        Notifikaatiokynnys: <input id="treshold-input" name="treshold" class="input-box" size="1"> nT/s
       </div>
-
-      <p id="greet-msg"></p>
     </div>
-    <script type="module" src="/main.js" defer></script>
-    <script type="module" src="/ui.js" defer></script>
-  </body>
+    <div id="notification-toggle">
+      <span id="toggle-text">Notifikaatiot </span>
+      <label class="switch">
+        <input id="toggle-input" type="checkbox">
+        <span class="slider round"></span>
+      </label>
+    </div>
+    <div id="tray-toggle">
+      <span id="tray-toggle-text">Minimoi ilmaisinalueelle </span>
+      <label class="switch">
+        <input id="tray-input" type="checkbox">
+        <span class="slider round"></span>
+      </label>
+    </div>
+  </div>
+
+  <div id="stations-page">
+    <h4 id="stations-header">Valitse havaintoasema</h4>
+    <table id="stations-table">
+    </table>
+  </div>
+
+  </div>
+
+  <div id="link"><a target="_blank" href="https://www.ilmatieteenlaitos.fi/revontulet-ja-avaruussaa">Avaruussää @ Ilmatieteen laitos</a></div>
+
+  <script type="module" src="./main.js" defer></script>
+  <script type="module" src="./ui.js" defer></script>  
+</body>
+  
 </html>

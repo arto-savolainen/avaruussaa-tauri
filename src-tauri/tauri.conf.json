@@ -20,9 +20,14 @@
         "close": true,
         "hide": true,
         "show": true,
+        "maximize": true,
+        "unmaximize": true,
         "minimize": true,
         "unminimize": true,
         "startDragging": true
+      },
+      "shell": {
+        "open": true
       },
       "all": false
     },
@@ -69,8 +74,8 @@
       {
         "decorations": false,
         "fullscreen": false,
-        "width": 800,
-        "height": 600,
+        "width": 300,
+        "height": 225,
         "resizable": false,
         "title": "Avaruussää"
       }

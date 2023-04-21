@@ -3,8 +3,6 @@ import { appWindow } from '@tauri-apps/api/window'
 import { sendNotification } from '@tauri-apps/api/notification'
 import axios from 'axios'
 
-const APP_BACKGROUND_COLOR = '#151515'
-const APP_TEXT_COLOR = '#404040'
 const TEN_MINUTES_MS = 10 * 60 * 1000
 const HOURS_TO_MS = 60 * 60 * 1000
 const STATIONS = [
@@ -48,7 +46,7 @@ const STATIONS = [
 let mainWindow
 let notificationTreshold = 0.4 // Default value, let user change this. In reality likelyhood depends on observatory location
 let notificationInterval = 1 // Minimum time between notifications in hours
-let minimizeToTray = true
+let minimizeToTray = false // DEV VALUE, VAIHDA TRUE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 let intervalTimer
 let intervalTimerStart
 let suppressNotification = false
@@ -174,45 +172,170 @@ const updateData = async () => {
 
 
 // Send configuration parameters to UI, then get data and send that as well
-const initializeUI = (window) => {
-  window.webContents.send('set-config',
+const initializeUI = () => {
+  appWindow.emit('ui-set-config',
     {
       notificationTreshold, notificationInterval, notificationToggleChecked, minimizeToTray, STATIONS, currentStation
     }
   )
 
-  // Get activity data, show notification if needed and send data to the renderer
+  // Get activity data, show notification if needed and send data to UI
   updateData()
 }
 
 
+//  REMEMBER 
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// SET ICON
+
+
+// const createTray = () => {
+//   let tray = new Tray(path.join(__dirname, "app-icon.png"))
+
+//   // Menu when right-clicking tray icon
+//   const contextMenu = Menu.buildFromTemplate([
+//     {
+//       label: 'Show', click: () => {
+//         mainWindow.show()
+//       }
+//     },
+//     {
+//       label: 'Quit', click: () => {
+//         app.quit()
+//       }
+//     }
+//   ])
+
+//   tray.on('double-click', (event) => {
+//     mainWindow.show()
+//   })
+
+//   tray.setToolTip('Avaruussää')
+//   tray.setContextMenu(contextMenu)
+
+//   return tray
+// }
+
+
+// ------------------ PROGRAM EXECUTION STARTS HERE ------------------
+
+
 window.addEventListener("DOMContentLoaded", () => {
+  initializeUI()
 
-  appWindow.emit('windowz', {
-    message: 'lololo'
-  })
+  // ----------------------------------
+  // Set timers for data fetching below
+  // ----------------------------------
+
+  // The website we get data from updates every ten minutes past the hour. Se we need to set a timer that triggers a data
+  // fetching operation just after that update. However, the site can take a bit of time to update (up to some tens of seconds).
+  // Here we get how many minutes until update happens from the present moment.
+  time = new Date()
+  // Calculate how many minutes to the next time minutes are divisible by 10 (ie. 00, 10, 20 etc.)
+  let offsetMinutes = 10 - (time.getMinutes() % 10 === 0 ? 10 : time.getMinutes() % 10)
+  // How many seconds to a full minute? By adding this to offsetMinutes we give the site a 1 minute buffer to update
+  const offsetSeconds = 60 - time.getSeconds()
+  // Time in milliseconds until the clock is 11 minutes past, 21 past, etc.
+  const timeUntilUpdateMs = (offsetMinutes * 60 + offsetSeconds) * 1000
+
+  // Set timer to trigger data fetching at the right time.
+  setTimeout(() => {
+    // Here time is about 1 minute after assumed site update. Now we set a timer that will run through the lifetime of the program
+    // and call the data fetch function every 10 minutes.
+    setInterval(() => {
+      updateData()
+      appWindow.emit('ui-set-update-timer', TEN_MINUTES_MS)
+    }, TEN_MINUTES_MS);
+
+    // Datafetch at the calculated time, after this fetching will happen at 10 minute intervals
+    updateData()
+    appWindow.emit('ui-set-update-timer', TEN_MINUTES_MS)
+  }, timeUntilUpdateMs)
+
+  // Send update timer info to UI
+  appWindow.emit('ui-set-update-timer', timeUntilUpdateMs)
 })
 
 
+// ------------------ USER ACTION HANDLERS ------------------
 
 
-
-
-
-
-
-
-
-
-
-
-listen('testi', (event) => {
-  console.log('event:', event)
+// Tray stuff
+appWindow.listen('minimize', (event) => {
+  if (minimizeToTray) {
+    event.preventDefault()
+    mainWindow.hide()
+    tray = 'createTray() placeholder'
+  }
+  else {
+    appWindow.minimize()
+  }
 })
 
-listen('loadtest', (event) => {
-  console.log('calling updateData')
-  updateData()
-  console.log('past the updateData call now')
+appWindow.listen('close', () => {
+  appWindow.close()
 })
 
+// mainWindow.on('restore', (event) => {
+//   if (tray) {
+//     mainWindow.show()
+//     tray.destroy()
+//   }
+// })
+
+
+// ------------------ IPC RECEIVER FUNCTIONS FOR MAIN ------------------
+
+
+// Triggers when the user sets a new value for the minimum delay between notifications
+ipcMain.on('set-interval', (event, newInterval) => {
+  if (intervalTimerStart) {
+    // With this the notification suppression timer behaves as if the old timer was started with the new interval
+    const timeLeft = (intervalTimerStart.getTime() + newInterval * HOURS_TO_MS) - Date.now()
+
+    // If there's suppression time left with the new interval
+    if (timeLeft > 0) {
+      startIntervalTimer(timeLeft)
+    }
+    // If notification would have cleared already with the new interval
+    else {
+      clearTimeout(intervalTimer) // Not strictly necessary I guess, just clear redundant timer
+      suppressNotification = false
+      intervalTimer = null
+      intervalTimerStart = null
+    }
+  }
+
+  notificationInterval = newInterval
+})
+
+// Triggers when user sets a new value for the notification treshold
+ipcMain.on('set-treshold', (event, newTreshold) => {
+  notificationTreshold = newTreshold
+})
+
+// Triggers when user clicks the notifications on / off toggle
+ipcMain.on('set-toggle', (event, checked) => {
+  notificationToggleChecked = checked
+})
+
+// Triggers when user clicks the minimize to tray on / off toggle
+ipcMain.on('set-tray-toggle', (event, checked) => {
+  minimizeToTray = checked
+})
+
+// Triggers when user clicks a cell in the stations list table
+ipcMain.on('set-station', (event, newStationCode) => {
+  currentStation = stationsCache.find(x => x.code === newStationCode)
+})
+
+
+// ------------------ MISC ------------------
+
+
+// app.on('quit', () => {
+//   if (tray) {
+//     tray.destroy()
+//   }
+// })
+// Remember to destroy tray if necessary
