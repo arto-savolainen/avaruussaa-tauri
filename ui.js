@@ -17,6 +17,10 @@ const mainDiv = document.getElementById('main-page')
 const settingsDiv = document.getElementById('settings-page')
 const stationsDiv = document.getElementById('stations-page')
 
+// Define URLs for dynamically set images so Vite can include them in production build
+const imgUrlBars = new URL('./bars.png', import.meta.url)
+const imgUrlArrow = new URL('./arrow.png', import.meta.url)
+
 // Initialize page visibility
 mainDiv.style.display = 'block'
 settingsDiv.style.display = 'none'
@@ -32,6 +36,30 @@ let notificationTreshold
 let stations
 let timer
 let updateTime
+
+const switchPage = (page) => {
+  switch (page) {
+    default:
+    case 'main':
+      settingsDiv.style.display = 'none'
+      stationsDiv.style.display = 'none'
+      mainDiv.style.display = 'block'
+      settingsIcon.src = imgUrlBars
+      break
+    case 'settings':
+      mainDiv.style.display = 'none'
+      stationsDiv.style.display = 'none'
+      settingsDiv.style.display = 'block'
+      settingsIcon.src = imgUrlArrow
+      break
+    case 'stations':
+      mainDiv.style.display = 'none'
+      settingsDiv.style.display = 'none'
+      stationsDiv.style.display = 'block'
+      settingsIcon.src = imgUrlArrow
+      break
+  }
+}
 
 const getStationActivity = (stationName) => {
   return stations.find(x => x.name === stationName).activity
@@ -267,16 +295,11 @@ trayInput.addEventListener('click', (event) => {
 settingsIcon.addEventListener('click', (event) => {
   // If in main page, switch to settings page
   if (mainDiv.style.display === 'block') {
-    mainDiv.style.display = 'none'
-    settingsDiv.style.display = 'block'
-    settingsIcon.src = 'arrow.png'
+    switchPage('settings')
   }
   // If in settings or stations page, switch back to main page
   else {
-    settingsDiv.style.display = 'none'
-    stationsDiv.style.display = 'none'
-    mainDiv.style.display = 'block'
-    settingsIcon.src = 'bars.png'
+    switchPage('main')
   }
 })
 
@@ -286,9 +309,7 @@ settingsIcon.addEventListener('click', (event) => {
 
 // When user clicks the station icon, hide main page and show the stations page
 stationIcon.addEventListener('click', (event) => {
-  mainDiv.style.display = 'none'
-  stationsDiv.style.display = 'block'
-  settingsIcon.src = 'arrow.png'
+  switchPage('stations')
 })
 
 
@@ -309,9 +330,7 @@ stationsTable.addEventListener('click', (event) => {
   updateActivityElement() // Show activity for the new station
 
   // Switch back to main page
-  stationsDiv.style.display = 'none'
-  mainDiv.style.display = 'block'
-  settingsIcon.src = 'bars.png'
+  switchPage('main')
 })
 
 
@@ -338,11 +357,8 @@ closeButton.addEventListener('click', () => {
 })
 
 
+// ------------------ EVENT LISTENER FOR DEFAULT CONTEXT MENU -------------------
 
 
-// window.addEventListener("DOMContentLoaded", () => {
-//   console.log('window.addEventListener')
-//   emit('loadtest', {
-//     payload: 'contentloaded'
-//   })
-// })
+// Disable webview default context menu on right-click
+document.addEventListener('contextmenu', event => event.preventDefault())

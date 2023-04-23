@@ -293,8 +293,8 @@ appWindow.listen('set-toggle', (event) => {
 // event.payload === checked
 appWindow.listen('set-tray-toggle', async (event) => {
   minimizeToTray = event.payload
-  const response = await invoke('toggle_tray', { test: '420' })
-  console.log('RESPONSE:', response)
+  // const response = await invoke('toggle_tray', { test: 'parametrilol' })
+  // console.log('RESPONSE:', response)
 })
 
 // Triggers when user clicks a cell in the stations list table

@@ -11,8 +11,6 @@ fn toggle_tray(test: &str) -> String {
 }
 
 fn main() {
-
-  // here `"quit".to_string()` defines the menu item id, and the second parameter is the menu item label.
   let show = CustomMenuItem::new("show".to_string(), "Show");
   let quit = CustomMenuItem::new("quit".to_string(), "Quit");
   let tray_menu = SystemTrayMenu::new()
@@ -27,7 +25,7 @@ fn main() {
     .system_tray(tray)
 
     .on_system_tray_event(|app, event| match event {
-      SystemTrayEvent::DoubleClick {
+      SystemTrayEvent::LeftClick {
         position: _,
         size: _,
         ..
@@ -35,8 +33,6 @@ fn main() {
         let window = app.get_window("main").unwrap();
         window.show().unwrap();
         window.unminimize().unwrap();
-        // let tray_handle = app.tray_handle();
-        // tray_handle.destroy();
       }
       SystemTrayEvent::MenuItemClick { id, .. } => {
         match id.as_str() {
@@ -47,8 +43,6 @@ fn main() {
             let window = app.get_window("main").unwrap();
             window.show().unwrap();
             window.unminimize().unwrap();
-            // let tray_handle = app.tray_handle();
-            // tray_handle.destroy();
           }
           _ => {}
         }
@@ -69,18 +63,6 @@ fn main() {
     .invoke_handler(tauri::generate_handler![toggle_tray])
 
     .run(tauri::generate_context!())
+
     .expect("error while running tauri application");
 }
-
-// .setup(|app| {
-//   let maybe_app_settings = app
-//       .path_resolver()
-//       .app_config_dir()
-//       .map(|dir| dir.join("settings.json"))
-//       .and_then(|path| std::fs::read_to_string(path).ok())
-//       .and_then(|json_string| serde_json::from_str::<AppSettings>(&json_string).ok());
-
-//   app.manage(Mutex::new(maybe_app_settings.unwrap_or_default()));
-
-//   Ok(())
-// })
